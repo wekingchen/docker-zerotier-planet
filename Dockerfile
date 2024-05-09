@@ -40,13 +40,13 @@ RUN mkdir -p /root/.cargo \
 RUN rustup toolchain install stable
 
 # 克隆和编译 ZeroTier One
-RUN git clone --branch main https://ghproxy.markxu.online/https://github.com/zerotier/ZeroTierOne.git /app/ZeroTierOne \
+RUN git clone --branch main https://mirror.ghproxy.com/https://github.com/zerotier/ZeroTierOne.git /app/ZeroTierOne \
     && cd /app/ZeroTierOne \
     && make ZT_SYMLINK=1 \
     && make install
 
 # 克隆并安装 ztncui
-RUN mkdir /app -p && cd /app && git clone --progress https://ghproxy.markxu.online/https://github.com/key-networks/ztncui.git \
+RUN mkdir /app -p && cd /app && git clone --progress https://mirror.ghproxy.com/https://github.com/key-networks/ztncui.git \
     && cd /app/ztncui/src \
     && cp /app/patch/binding.gyp . \
     && echo "开始配置npm环境" \
