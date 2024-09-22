@@ -13,40 +13,22 @@ WORKDIR /app
 # 复制当前目录下的文件到容器的 /app 目录
 ADD . /app
 
-# 安装基础依赖
+# 安装基础依赖和 Rust
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories \
     && apk update \
-    && apk add --no-cache git python3 npm make g++ linux-headers curl pkgconfig openssl-dev
-
-# 从清华大学镜像源下载并安装 rustup-init
-RUN curl -LO https://mirrors.tuna.tsinghua.edu.cn/rustup/rustup/archive/1.26.0/x86_64-unknown-linux-musl/rustup-init \
-    && chmod +x rustup-init \
-    && ./rustup-init -y --no-modify-path --default-toolchain none \
-    && rm rustup-init
-
-# 设置环境变量
-ENV PATH="/root/.cargo/bin:${PATH}"
-
-# 设置 Rustup 和 Cargo 的中国大陆镜像源
-ENV RUSTUP_DIST_SERVER=https://mirrors.ustc.edu.cn/rust-static
-ENV RUSTUP_UPDATE_ROOT=https://mirrors.ustc.edu.cn/rust-static/rustup
-RUN mkdir -p /root/.cargo \
-    && echo '[source.crates-io]' > /root/.cargo/config \
-    && echo 'replace-with = "ustc"' >> /root/.cargo/config \
-    && echo '[source.ustc]' >> /root/.cargo/config \
-    && echo 'registry = "https://mirrors.ustc.edu.cn/crates.io-index"' >> /root/.cargo/config
-
-# 安装 Rust 工具链
-RUN rustup toolchain install stable
+    && apk add --no-cache git python3 npm make g++ linux-headers curl pkgconfig openssl-dev \
+    && curl https://sh.rustup.rs -sSf | sh -s -- -y \
+    && source $HOME/.cargo/env \
+    && rustup default stable
 
 # 克隆和编译 ZeroTier One
-RUN git clone --branch main https://mirror.ghproxy.com/https://github.com/zerotier/ZeroTierOne.git /app/ZeroTierOne \
+RUN git clone --branch main https://ghp.ci/https://github.com/zerotier/ZeroTierOne.git /app/ZeroTierOne \
     && cd /app/ZeroTierOne \
     && make ZT_SYMLINK=1 \
     && make install
 
 # 克隆并安装 ztncui
-RUN mkdir /app -p && cd /app && git clone --progress https://mirror.ghproxy.com/https://github.com/key-networks/ztncui.git \
+RUN mkdir /app -p && cd /app && git clone --progress https://ghp.ci/https://github.com/key-networks/ztncui.git \
     && cd /app/ztncui/src \
     && cp /app/patch/binding.gyp . \
     && echo "开始配置npm环境" \
@@ -92,4 +74,4 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/re
 VOLUME [ "/app","/var/lib/zerotier-one" ]
 
 # 设置启动命令
-CMD /bin/sh -c "cd /var/lib/zerotier-one && ./zerotier-one -p`cat /app/zerotier-one.port` -d; cd /app/ztncui/src; npm start"
+CMD /bin/sh -c "cd /var/lib/zerotier-one && ./zerotier-one -p`cat /app/zerotier-one.port` -d; cd /app/ztncui/src;npm start"
